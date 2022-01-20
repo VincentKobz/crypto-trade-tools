@@ -2,6 +2,7 @@ from binance.client import Client
 import ta
 import pandas_ta as pda
 import pandas as pd
+import src.strategy.trade_condition as tr
 
 def init_data(pair: str, date: str, interval: str):
     client = Client()
@@ -99,6 +100,12 @@ def init_data(pair: str, date: str, interval: str):
 
     # Kaufman’s Adaptive Moving Average (KAMA)
     df['KAMA'] = ta.momentum.kama(close=df['close'], window=10, pow1=2, pow2=30)
+    strat_array = []
+    strat_array.append(('aligator', tr.buyConditionAligator, tr.sellConditionAligator))
+    strat_array.append(('big_will', tr.buyConditionBigWill, tr.sellConditionBigWill))
+    strat_array.append(('ema', tr.buyConditionEMA, tr.sellConditionEMA))
+    strat_array.append(('trix', tr.buyConditionTrix, tr.sellConditionTrix))
+    strat_array.append(('true', tr.buyConditionTrueStrategy, tr.sellConditionTrueStrategy))
 
     dfTest = df.copy()
-    return dfTest
+    return (dfTest, strat_array)

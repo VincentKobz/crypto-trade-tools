@@ -3,8 +3,7 @@ from math import *
 from argparse import ArgumentParser
 
 from pandas_ta import performance
-import src.strategy.init_strategy as strat
-import src.strategy.trade_condition as trade
+
 
 # DATA
 stochTop = 0.81
@@ -33,7 +32,7 @@ def backTracing(usdt, buyReady, sellReady, dt, dfTest, wallet, coin, buyConditio
       totalFees += fee
       usdt = 0
       wallet = coin * row['close']
-      print("Buy crypto at",dfTest['close'][index],'$ the', index)
+      #print("Buy crypto at",dfTest['close'][index],'$ the', index)
 
       dt = updateInfoGraph(dt, index, row, fee, wallet, usdt) 
 
@@ -46,7 +45,7 @@ def backTracing(usdt, buyReady, sellReady, dt, dfTest, wallet, coin, buyConditio
       totalFees += fee
       buyReady = True
       wallet = usdt
-      print("Sell crypto at",dfTest['close'][index],'$ the', index)
+      #print("Sell crypto at",dfTest['close'][index],'$ the', index)
 
       dt = updateInfoGraph(dt, index, row, fee, wallet, usdt)
 
@@ -66,32 +65,31 @@ def backTracing(usdt, buyReady, sellReady, dt, dfTest, wallet, coin, buyConditio
 
   
 
-def launch_analysis(pair, date, inter, strategy, usdt, taker_fee, maker_fee):
+def launch_analysis(strategy, usdt, taker_fee, maker_fee, dfTest, strat_array):
 
-    dfTest = strat.init_data(pair, date, inter)
+    
 
+    # struct of data for result
     dt = None
     dt = pd.DataFrame(columns = ['date','position', 'reason', 'price', 'frais' ,'fiat', 'coins', 'wallet', 'drawBack']) 
 
-    functionBuy = trade.buyConditionAligator
-    functionSell = trade.sellConditionAligator
+    # default strategy
+    (_, functionBuy, functionSell) = strat_array[0]
+
     match strategy:
         case "aligator":
-            functionBuy = trade.buyConditionAligator
-            functionSell = trade.sellConditionAligator
-        case "trix":
-            functionBuy = trade.buyConditionTrix
-            functionSell = trade.sellConditionTrix
-        case "true":
-            functionBuy = trade.buyConditionTrueStrategy
-            functionSell = trade.sellConditionTrueStrategy
-        case "ema":
-            functionBuy = trade.buyConditionEMA
-            functionSell = trade.sellConditionEMA
+            (_, functionBuy, functionSell) = strat_array[0]
         case "big_will":
-            functionBuy = trade.buyConditionBigWill
-            functionSell = trade.sellConditionBigWill
+            (_, functionBuy, functionSell) = strat_array[1]
+        case "ema":
+            (_, functionBuy, functionSell) = strat_array[2]
+        case "trix":
+            (_, functionBuy, functionSell) = strat_array[3]
+        case "true":
+            (_, functionBuy, functionSell) = strat_array[4]
+        
 
     wallet = usdt
     (botWallet, holdWallet, totalFees, performanceHold) = backTracing(int(usdt), buyReady, sellReady, dt, dfTest, wallet, coin, functionBuy, functionSell, float(taker_fee) / 100, float(maker_fee) / 100)
-    return (botWallet, holdWallet, totalFees, performanceHold)
+
+    return (strategy, botWallet, holdWallet, totalFees, performanceHold)
