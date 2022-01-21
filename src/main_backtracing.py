@@ -66,9 +66,6 @@ def backTracing(usdt, buyReady, sellReady, dt, dfTest, wallet, coin, buyConditio
   
 
 def launch_analysis(strategy, usdt, taker_fee, maker_fee, dfTest, strat_array):
-
-    
-
     # struct of data for result
     dt = None
     dt = pd.DataFrame(columns = ['date','position', 'reason', 'price', 'frais' ,'fiat', 'coins', 'wallet', 'drawBack']) 
