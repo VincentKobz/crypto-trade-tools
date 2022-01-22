@@ -10,7 +10,7 @@ Launch bash script `install.sh`:
 $ ./install.sh
 ```
 ## How to use it
-There is two program: an python api and an svelte website interface.
+There is two program: a python api and a svelte website interface.
 
 Launch the api in the root folder with:
 ```
