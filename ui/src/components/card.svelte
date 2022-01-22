@@ -8,8 +8,8 @@
         display: flex;
 		flex-direction: row;
 		justify-content: center;
-        margin-left: 30%;
-        margin-right: 30%;
+        margin-left: 20%;
+        margin-right: 20%;
         background: #fff;
         padding: 20px;
         border-radius: 6px;

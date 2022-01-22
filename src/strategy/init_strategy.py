@@ -2,15 +2,38 @@ from binance.client import Client
 import ta
 import pandas_ta as pda
 import pandas as pd
+from src.backtrace import Backtrace
 import src.strategy.trade_condition as tr
 
-def init_data(pair: str, date: str, interval: str):
+def init_data(bot: Backtrace):
     client = Client()
-    pairName = pair
-    startDate = '2021-01-01'
+    pairName = bot.pair
+    startDate = bot.date
+
     timeInterval = Client.KLINE_INTERVAL_1HOUR
 
+    match bot.interval:
+        case "1m":
+            timeInterval = Client.KLINE_INTERVAL_1MINUTE
+        case "15m":
+            timeInterval = Client.KLINE_INTERVAL_15MINUTE
+        case "30m":
+            timeInterval = Client.KLINE_INTERVAL_30MINUTE
+        case "1h":
+            timeInterval = Client.KLINE_INTERVAL_1HOUR
+        case "2h":
+            timeInterval = Client.KLINE_INTERVAL_2HOUR
+        case "4h":
+            timeInterval = Client.KLINE_INTERVAL_4HOUR
+        case "12h":
+            timeInterval = Client.KLINE_INTERVAL_12HOUR
+        case "1d":
+            timeInterval = Client.KLINE_INTERVAL_1DAY
+        case "3d":
+            timeInterval = Client.KLINE_INTERVAL_3DAY
+
     klinesT = client.get_historical_klines(pairName, timeInterval, startDate)
+    
 
     df = pd.DataFrame(klinesT, columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume', 'close_time', 'quote_av', 'trades', 'tb_base_av', 'tb_quote_av', 'ignore' ])
     df['close'] = pd.to_numeric(df['close'])
@@ -42,11 +65,11 @@ def init_data(pair: str, date: str, interval: str):
     df['EMA48']=ta.trend.ema_indicator(close=df['close'], window=48)
 
     # Relative Strength Index (RSI)
-    df['RSI'] =ta.momentum.rsi(close=df['close'], window=14)
+    df['RSI'] =ta.momentum.rsi(close=df['close'], window=bot.rsiLength)
 
     # TRIX
-    trixLength = 8
-    trixSignal = 19 
+    trixLength = bot.trixLength
+    trixSignal = bot.trixSignal
     df['TRIX'] = ta.trend.ema_indicator(ta.trend.ema_indicator(ta.trend.ema_indicator(close=df['close'], window=trixLength), window=trixLength), window=trixLength)
     df['TRIX_PCT'] = df["TRIX"].pct_change()*100
     df['TRIX_SIGNAL'] = ta.trend.sma_indicator(df['TRIX_PCT'],trixSignal)
@@ -59,7 +82,7 @@ def init_data(pair: str, date: str, interval: str):
     df['MACD_DIFF'] = MACD.macd_diff() #Histogramme MACD
 
     # BigWill
-    df['AO']= ta.momentum.awesome_oscillator(df['high'],df['low'],window1=6,window2=22)
+    df['AO']= ta.momentum.awesome_oscillator(df['high'],df['low'],window1=bot.bigWindows1,window2=bot.bigWindows2)
     df['WillR'] = ta.momentum.williams_r(high=df['high'], low=df['low'], close=df['close'], lbp=14)
 
     # Stochastic RSI
@@ -106,6 +129,7 @@ def init_data(pair: str, date: str, interval: str):
     strat_array.append(('ema', tr.buyConditionEMA, tr.sellConditionEMA))
     strat_array.append(('trix', tr.buyConditionTrix, tr.sellConditionTrix))
     strat_array.append(('true', tr.buyConditionTrueStrategy, tr.sellConditionTrueStrategy))
+    strat_array.append(('macd', tr.buyConditionMACD, tr.sellConditionMACD))
 
     dfTest = df.copy()
     return (dfTest, strat_array)

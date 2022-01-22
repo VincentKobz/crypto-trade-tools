@@ -64,3 +64,15 @@ def sellConditionBigWill(row, stochTop, stochBottom, stochOverSold):
         return True
     else:
         return False
+
+def buyConditionMACD(row, stochTop, stochBottom, stochOverSold):
+  if row['MACD'] > row['MACD_SIGNAL']:
+    return True
+  else:
+    return False
+
+def sellConditionMACD(row, stochTop, stochBottom, stochOverSold):
+  if row['MACD'] < row['MACD_SIGNAL']:
+    return True
+  else:
+    return False
