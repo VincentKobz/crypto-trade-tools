@@ -9,6 +9,7 @@ def init_data(pair: str, date: str, interval: str):
     pairName = pair
     startDate = '2021-01-01'
     timeInterval = Client.KLINE_INTERVAL_1HOUR
+    print(pairName)
 
     klinesT = client.get_historical_klines(pairName, timeInterval, startDate)
 
@@ -101,11 +102,11 @@ def init_data(pair: str, date: str, interval: str):
     # Kaufman’s Adaptive Moving Average (KAMA)
     df['KAMA'] = ta.momentum.kama(close=df['close'], window=10, pow1=2, pow2=30)
     strat_array = []
-    strat_array.append(('aligator', tr.buyConditionAligator, tr.sellConditionAligator))
-    strat_array.append(('big_will', tr.buyConditionBigWill, tr.sellConditionBigWill))
-    strat_array.append(('ema', tr.buyConditionEMA, tr.sellConditionEMA))
-    strat_array.append(('trix', tr.buyConditionTrix, tr.sellConditionTrix))
-    strat_array.append(('true', tr.buyConditionTrueStrategy, tr.sellConditionTrueStrategy))
+    strat_array.append(('aligator', tr.buy_condition_aligator, tr.sell_condition_aligator))
+    strat_array.append(('big_will', tr.buy_condition_big_will, tr.sell_condition_big_will))
+    strat_array.append(('ema', tr.buy_condition_ema, tr.sell_condition_ema))
+    strat_array.append(('trix', tr.buy_condition_trix, tr.sell_condition_trix))
+    strat_array.append(('true', tr.buy_condition_true_strategy, tr.sell_condition_true_strategy))
 
     dfTest = df.copy()
     return (dfTest, strat_array)

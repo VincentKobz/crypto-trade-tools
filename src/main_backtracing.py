@@ -6,62 +6,60 @@ from pandas_ta import performance
 
 
 # DATA
-stochTop = 0.81
-stochBottom = 0.27
-stochOverSold = 0.2
+stoch_top = 0.81
+stoch_bottom = 0.27
+stoch_over_sold = 0.2
 
-coin = 0
-buyReady = True
-sellReady = True
+coin, buy_ready, sell_ready = 0, True, True
 
-def updateInfoGraph(dt, index, row, fee, wallet, usdt):
+def update_info_graph(dt, index, row, fee, wallet, usdt):
   myrow = {'date': index,'position': "Buy",'price': row['close'],'frais': fee * wallet,'fiat': usdt,'coins': coin,'wallet': wallet}
   dt = dt.append(myrow,ignore_index=True)
   return dt
 
-def backTracing(usdt, buyReady, sellReady, dt, dfTest, wallet, coin, buyCondition, sellCondition, taker_fee, maker_fee):
-  initalWallet = float(wallet)
-  totalFees = 0.0
+def back_tracing(usdt, buy_ready, sell_ready, dt, df_test, wallet, coin, buy_condition, sell_condition, taker_fee, maker_fee):
+  inital_wallet = float(wallet)
+  total_fees = 0.0
 
-  for index, row in dfTest.iterrows():
-    if buyCondition(row, stochTop, stochBottom, stochOverSold) and usdt > 0 and buyReady == True:
-      buyPrice = row['close']
-      coin = usdt / buyPrice
+  for index, row in df_test.iterrows():
+    if buy_condition(row, stoch_top, stoch_bottom, stoch_over_sold) and usdt > 0 and buy_ready == True:
+      buy_price = row['close']
+      coin = usdt / buy_price
       fee = taker_fee * coin
       coin = coin - fee
-      totalFees += fee
+      total_fees += fee
       usdt = 0
       wallet = coin * row['close']
       #print("Buy crypto at",dfTest['close'][index],'$ the', index)
 
-      dt = updateInfoGraph(dt, index, row, fee, wallet, usdt) 
+      dt = update_info_graph(dt, index, row, fee, wallet, usdt) 
 
-    elif sellCondition(row, stochTop, stochBottom, stochOverSold) and coin > 0 and sellReady == True:
-      sellPrice = row['close']
-      usdt = coin * sellPrice
+    elif sell_condition(row, stoch_top, stoch_bottom, stoch_over_sold) and coin > 0 and sell_ready == True:
+      sell_price = row['close']
+      usdt = coin * sell_price
       fee = taker_fee * usdt
       usdt = usdt - fee
       coin = 0
-      totalFees += fee
-      buyReady = True
+      total_fees += fee
+      buy_ready = True
       wallet = usdt
       #print("Sell crypto at",dfTest['close'][index],'$ the', index)
 
-      dt = updateInfoGraph(dt, index, row, fee, wallet, usdt)
+      dt = update_info_graph(dt, index, row, fee, wallet, usdt)
 
   
-  price = initalWallet / dfTest["close"].iloc[0] * dfTest["close"].iloc[len(dfTest)-1]
-  iniClose = dfTest.iloc[0]['close']
-  lastClose = dfTest.iloc[len(dfTest)-1]['close']
-  holdPorcentage = ((lastClose - iniClose)/iniClose) * 100
-  algoPorcentage = ((wallet - initalWallet)/initalWallet) * 100
+  price = inital_wallet / df_test["close"].iloc[0] * df_test["close"].iloc[len(df_test)-1]
+  init_close = df_test.iloc[0]['close']
+  last_close = df_test.iloc[len(df_test)-1]['close']
+  hold_percentage = ((last_close - init_close) / init_close) * 100
+  algo_percentage = ((wallet - inital_wallet) / inital_wallet) * 100
 
-  print("Final result: ", wallet,"$", algoPorcentage)
-  print("Buy and hold: ", price,"$", holdPorcentage)
+  print("Final result: ", wallet,"$", algo_percentage)
+  print("Buy and hold: ", price,"$", hold_percentage)
   dt[['wallet','price']].plot(subplots=True, figsize=(20,10))
-  performanceHold = ((wallet - price)/ price) * 100
+  performanceHold = ((wallet - price) / price) * 100
 
-  return (float("{:.2f}".format(wallet)), float("{:.2f}".format(price)), float("{:.2f}".format(totalFees)), float("{:.2f}".format(performanceHold)))
+  return (float("{:.2f}".format(wallet)), float("{:.2f}".format(price)), float("{:.2f}".format(total_fees)), float("{:.2f}".format(performanceHold)))
 
   
 
@@ -71,22 +69,22 @@ def launch_analysis(strategy, usdt, taker_fee, maker_fee, dfTest, strat_array):
     dt = pd.DataFrame(columns = ['date','position', 'reason', 'price', 'frais' ,'fiat', 'coins', 'wallet', 'drawBack']) 
 
     # default strategy
-    (_, functionBuy, functionSell) = strat_array[0]
+    (_, function_buy, function_sell) = strat_array[0]
 
     match strategy:
         case "aligator":
-            (_, functionBuy, functionSell) = strat_array[0]
+            (_, function_buy, function_sell) = strat_array[0]
         case "big_will":
-            (_, functionBuy, functionSell) = strat_array[1]
+            (_, function_buy, function_sell) = strat_array[1]
         case "ema":
-            (_, functionBuy, functionSell) = strat_array[2]
+            (_, function_buy, function_sell) = strat_array[2]
         case "trix":
-            (_, functionBuy, functionSell) = strat_array[3]
+            (_, function_buy, function_sell) = strat_array[3]
         case "true":
-            (_, functionBuy, functionSell) = strat_array[4]
+            (_, function_buy, function_sell) = strat_array[4]
         
 
     wallet = usdt
-    (botWallet, holdWallet, totalFees, performanceHold) = backTracing(int(usdt), buyReady, sellReady, dt, dfTest, wallet, coin, functionBuy, functionSell, float(taker_fee) / 100, float(maker_fee) / 100)
+    (bot_wallet, hold_wallet, total_fees, performance_hold) = back_tracing(int(usdt), buy_ready, sell_ready, dt, dfTest, wallet, coin, function_buy, function_sell, float(taker_fee) / 100, float(maker_fee) / 100)
 
-    return (strategy, botWallet, holdWallet, totalFees, performanceHold)
+    return (bot_wallet, hold_wallet, total_fees, performance_hold)

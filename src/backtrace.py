@@ -1,4 +1,4 @@
-class backtrace:
+class Backtrace:
     hold_wallet = 0
     
     def __init__(self, wallet, strategy, date, test_all, maker_fee, taker_fee):
