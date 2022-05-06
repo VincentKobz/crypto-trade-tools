@@ -39,7 +39,9 @@ class Results(Resource):
 
 class Calculate(Resource):
     def post(self):
+        print("OK")
         args = parser.parse_args()
+        print(args)
         res_temp = test.launch_backtracing(args['test_all'], args['pair'], args['start'], args['interval'], args['strategy'], args['wallet'], args['taker_fee'], args['maker_fee'])
 
         return {'data': res_temp}, 200

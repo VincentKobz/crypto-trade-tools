@@ -1,9 +1,6 @@
 <script>
 	import Card from "./components/card.svelte";
-	import { onMount } from 'svelte';
-	import axios from 'axios';
 	import Tabs from "./shared/Tabs.svelte"
-
 	import SvelteTable from "svelte-table";
 	import Select from 'svelte-select';
 	import Copy from './components/copy.svelte';
@@ -97,8 +94,8 @@
 	let pair_name;
 	let strategy_name;
 	let wallet;
-	let fees_maker;
-	let fees_taker;
+	let maker_fee;
+	let taker_fee;
 	let time_interval;
 	let is_loading = 0;
 	let test_all = false;
@@ -110,49 +107,51 @@
 	const items = ['Home', 'Result'];
 	let activeItem = 'Home';
 
-	let now = new Date(), month, day, year;
 	let dateString;
-	
-	onMount(async ()=> {
-
-		const response = await axios.get('http://127.0.0.1:5000/result');
-		res = response.data.data;
-
-        month = '' + (now.getMonth() + 1);
-        day = '' + now.getDate();
-        year = now.getFullYear();
-
-		if (month.length < 2) 
-			month = '0' + month;
-		if (day.length < 2) 
-			day = '0' + day;
-
-		dateString = [year, month, day].join('-');
-	})
 
 	async function handleSubmit() {
 		is_loading = 1;
-		const response = await axios.post("http://127.0.0.1:5000/parameter?pair="
-		+ pair_name + "&strategy=" + strategy_name
-		+ "&wallet=" + wallet + "&interval=" + time_interval.val
-		+ "&start=" + dateString + "&maker_fee=" + fees_maker
-		+ "&taker_fee=" + fees_taker + "&test_all=" + test_all
-		+ "&optimize=" + optimize);
 
-		const response_data = await axios.get('http://127.0.0.1:5000/result');
-		res = response_data.data.data;
-		generateData();
-		console.log(res.test_all[0])
-		is_loading = 0;
-		activeItem = 'Result';
+		const raw = JSON.stringify({
+			pair: pair_name,
+			strategy: strategy_name,
+			wallet: wallet,
+			maker_fee: maker_fee,
+			taker_fee: taker_fee,
+			start: dateString,
+			interval: time_interval,
+			test_all: test_all,
+			optimize: optimize
+  		});
+
+		var myHeaders = new Headers();
+		myHeaders.append("Content-Type", "application/json");
+
+		var requestOptions = {
+			method: 'POST',
+			headers: myHeaders,
+			body: raw,
+			redirect: 'follow'
+		};
+
+		fetch("http://127.0.0.1:5000/calculate", requestOptions)
+		.then(response => response.json())
+		.then(result => {
+			res = result.data;
+			is_loading = 0;
+			activeItem = 'Result';
+			console.log(res[0])
+			generateData(res);
+		})
+		.catch(error => console.log('error', error));
 	}
 
 	let rows = []
 
-	function generateData(){
+	function generateData(res){
 		rows = []
 		for (var i = 0; i < 1 + (test_all * strategy.length - test_all * 1); i++){
-			rows = [...rows, { strategy: res.res[0][i][0], bot_wallet: res.res[0][i][1], hold_wallet: res.res[0][i][2], bot_vs_hold: res.res[0][i][4], total_fee:  res.res[0][i][3], nb_trades:  res.res[0][i][5]}];
+			rows = [...rows, { strategy: res[i][0], bot_wallet: res[i][1], hold_wallet: res[i][2], bot_vs_hold: res[i][4], total_fee:  res[i][3], nb_trades:  res[i][5]}];
 		}
 		
 	};
@@ -169,7 +168,6 @@
 		time_interval = event.detail.value;
  	};
 	
-
 	const Switch = (e) => {
 		activeItem = e.detail;
 	}
@@ -217,12 +215,12 @@
 			<div class="row">
 				<div class="elt">
 					<h2>Maker fee</h2>
-					<input type=number bind:value={fees_maker}>
+					<input type=number bind:value={maker_fee}>
 				</div>
 
 				<div class="elt">
 					<h2>Taker fee</h2>
-					<input type=number bind:value={fees_taker}>
+					<input type=number bind:value={taker_fee}>
 				</div>
 			</div>
 
@@ -248,7 +246,7 @@
 			
 			<div class="row">
 			{#if is_loading == 0}
-				<button disabled={!pair_name || !strategy_name || !dateString || !fees_maker || !time_interval || !fees_taker || !wallet} type=submit on:click={handleSubmit}>
+				<button disabled={!pair_name || !strategy_name || !dateString || !maker_fee || !time_interval || !taker_fee || !wallet} type=submit on:click={handleSubmit}>
 					Simulate
 				</button>
 			{/if}
@@ -268,9 +266,6 @@
 {/if}
 
 <Copy/>
-
-
-
 
 <style>
 	header {
