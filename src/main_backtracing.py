@@ -65,7 +65,6 @@ def backTracing(bot: Bot, usdt, buy_ready, sell_ready, dt, df_test, wallet, coin
 
 def launch_analysis(bot: Bot):
     # struct of data for result
-    dt = None
     dt = pd.DataFrame(columns = ['date','position', 'reason', 'price', 'frais' ,'fiat', 'coins', 'wallet', 'drawBack']) 
 
     # default strategy

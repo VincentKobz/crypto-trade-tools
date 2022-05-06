@@ -7,11 +7,13 @@ def launch_backtracing(test_all, pair_name, date, inter, strategy, usdt, taker_f
     backtrace = Backtrace(date, inter, pair_name)
     
     # get all data and array of with all strategy
-    (dfTest, strat_array) = strat.init_data(backtrace)
-    bot = Bot(float(usdt), strategy, dfTest, taker_fee, maker_fee, strat_array)
+    (df_test, strat_array) = strat.init_data(backtrace)
+    bot = Bot(float(usdt), strategy, df_test, taker_fee, maker_fee, strat_array)
     
     res = []
+
     print(test_all)
+
     if test_all == 'false':
         res.append(main.launch_analysis(bot))
         print('One strategy')

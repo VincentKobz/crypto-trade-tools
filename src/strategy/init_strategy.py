@@ -9,6 +9,7 @@ def init_data(bot: Backtrace):
     client = Client()
     pair_name = bot.pair
     start_date = bot.date
+    print(bot.date)
 
     time_interval = Client.KLINE_INTERVAL_1HOUR
     print(pair_name)
@@ -46,7 +47,6 @@ def init_data(bot: Backtrace):
     df.index = pd.to_datetime(df.index, unit='ms')
     del df['timestamp']
 
-    print("Data loaded 100%")
 
     df.drop(df.columns.difference(['open','high','low','close','volume']), 1, inplace=True)
 
@@ -92,38 +92,38 @@ def init_data(bot: Backtrace):
     df['STOCH_RSI_K'] =ta.momentum.stochrsi_k(close=df['close'], window=14, smooth1=3, smooth2=3) #Bleu sur TradingView
 
     # Ichimoku
-    df['KIJUN'] = ta.trend.ichimoku_base_line(high=df['high'], low=df['low'], window1=9, window2=26)
-    df['TENKAN'] = ta.trend.ichimoku_conversion_line(high=df['high'], low=df['low'], window1=9, window2=26)
-    df['SSA'] = ta.trend.ichimoku_a(high=df['high'], low=df['low'], window1=9, window2=26)
-    df['SSB'] = ta.trend.ichimoku_b(high=df['high'], low=df['low'], window2=26, window3=52)
+    #df['KIJUN'] = ta.trend.ichimoku_base_line(high=df['high'], low=df['low'], window1=9, window2=26)
+    #df['TENKAN'] = ta.trend.ichimoku_conversion_line(high=df['high'], low=df['low'], window1=9, window2=26)
+    #df['SSA'] = ta.trend.ichimoku_a(high=df['high'], low=df['low'], window1=9, window2=26)
+    #df['SSB'] = ta.trend.ichimoku_b(high=df['high'], low=df['low'], window2=26, window3=52)
 
     # Bollinger Bands
-    bol_band = ta.volatility.BollingerBands(close=df['close'], window=20, window_dev=2)
-    df['BOL_H_BAND'] = bol_band.bollinger_hband() #Bande Supérieur
-    df['BOL_L_BAND'] = bol_band.bollinger_lband() #Bande inférieur
-    df['BOL_MAVG_BAND'] = bol_band.bollinger_mavg() #Bande moyenne
+    #bol_band = ta.volatility.BollingerBands(close=df['close'], window=20, window_dev=2)
+    #df['BOL_H_BAND'] = bol_band.bollinger_hband() #Bande Supérieur
+    #df['BOL_L_BAND'] = bol_band.bollinger_lband() #Bande inférieur
+    #df['BOL_MAVG_BAND'] = bol_band.bollinger_mavg() #Bande moyenne
 
     # ADX
-    adx = ta.trend.ADXIndicator(df['high'], df['low'], df['close'], window=14) 
-    df['ADX'] = adx.adx()
-    df['ADX_NEG'] = adx.adx_neg()
-    df['ADX_POS'] = adx.adx_pos()
+    #adx = ta.trend.ADXIndicator(df['high'], df['low'], df['close'], window=14) 
+    #df['ADX'] = adx.adx()
+    #df['ADX_NEG'] = adx.adx_neg()
+    #df['ADX_POS'] = adx.adx_pos()
 
     # Average True Range (ATR)
-    df['ATR'] = ta.volatility.average_true_range(high=df['high'], low=df['low'], close=df['close'], window=14)
+    #df['ATR'] = ta.volatility.average_true_range(high=df['high'], low=df['low'], close=df['close'], window=14)
 
     # Super Trend
-    st_length = 10
-    st_multiplier = 3.0
-    superTrend = pda.supertrend(high=df['high'], low=df['low'], close=df['close'], length=st_length, multiplier=st_multiplier)
-    df['SUPER_TREND'] = superTrend['SUPERT_'+str(st_length)+"_"+str(st_multiplier)] #Valeur de la super trend
-    df['SUPER_TREND_DIRECTION'] = superTrend['SUPERTd_'+str(st_length)+"_"+str(st_multiplier)] #Retourne 1 si vert et -1 si rouge
+    #st_length = 10
+    #st_multiplier = 3.0
+    #superTrend = pda.supertrend(high=df['high'], low=df['low'], close=df['close'], length=st_length, multiplier=st_multiplier)
+    #df['SUPER_TREND'] = superTrend['SUPERT_'+str(st_length)+"_"+str(st_multiplier)] #Valeur de la super trend
+    #df['SUPER_TREND_DIRECTION'] = superTrend['SUPERTd_'+str(st_length)+"_"+str(st_multiplier)] #Retourne 1 si vert et -1 si rouge
 
     #Awesome Oscillator
-    df['AWESOME_OSCILLATOR'] = ta.momentum.awesome_oscillator(high=df['high'], low=df['low'], window1=5, window2=34)
+    #df['AWESOME_OSCILLATOR'] = ta.momentum.awesome_oscillator(high=df['high'], low=df['low'], window1=5, window2=34)
 
     # Kaufman’s Adaptive Moving Average (KAMA)
-    df['KAMA'] = ta.momentum.kama(close=df['close'], window=10, pow1=2, pow2=30)
+    #df['KAMA'] = ta.momentum.kama(close=df['close'], window=10, pow1=2, pow2=30)
     strat_array = []
     strat_array.append(('aligator', tr.buy_condition_aligator, tr.sell_condition_aligator))
     strat_array.append(('big_will', tr.buy_condition_big_will, tr.sell_condition_big_will))
@@ -133,4 +133,6 @@ def init_data(bot: Backtrace):
     strat_array.append(('macd', tr.buy_condition_macd, tr.sell_condition_macd))
 
     df_test = df.copy()
+
+    print("Data loaded 100%")
     return (df_test, strat_array)
