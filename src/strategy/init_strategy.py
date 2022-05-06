@@ -2,18 +2,41 @@ from binance.client import Client
 import ta
 import pandas_ta as pda
 import pandas as pd
+from src.backtrace import Backtrace
 import src.strategy.trade_condition as tr
 
-def init_data(pair: str, date: str, interval: str):
+def init_data(bot: Backtrace):
     client = Client()
-    pairName = pair
-    startDate = '2021-01-01'
-    timeInterval = Client.KLINE_INTERVAL_1HOUR
-    print(pairName)
+    pair_name = bot.pair
+    start_date = bot.date
 
-    klinesT = client.get_historical_klines(pairName, timeInterval, startDate)
+    time_interval = Client.KLINE_INTERVAL_1HOUR
+    print(pair_name)
 
-    df = pd.DataFrame(klinesT, columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume', 'close_time', 'quote_av', 'trades', 'tb_base_av', 'tb_quote_av', 'ignore' ])
+    match bot.interval:
+        case "1m":
+            time_interval = Client.KLINE_INTERVAL_1MINUTE
+        case "15m":
+            time_interval = Client.KLINE_INTERVAL_15MINUTE
+        case "30m":
+            time_interval = Client.KLINE_INTERVAL_30MINUTE
+        case "1h":
+            time_interval = Client.KLINE_INTERVAL_1HOUR
+        case "2h":
+            time_interval = Client.KLINE_INTERVAL_2HOUR
+        case "4h":
+            time_interval = Client.KLINE_INTERVAL_4HOUR
+        case "12h":
+            time_interval = Client.KLINE_INTERVAL_12HOUR
+        case "1d":
+            time_interval = Client.KLINE_INTERVAL_1DAY
+        case "3d":
+            time_interval = Client.KLINE_INTERVAL_3DAY
+
+    klines_t = client.get_historical_klines(pair_name, time_interval, start_date)
+    
+
+    df = pd.DataFrame(klines_t, columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume', 'close_time', 'quote_av', 'trades', 'tb_base_av', 'tb_quote_av', 'ignore' ])
     df['close'] = pd.to_numeric(df['close'])
     df['high'] = pd.to_numeric(df['high'])
     df['low'] = pd.to_numeric(df['low'])
@@ -43,24 +66,24 @@ def init_data(pair: str, date: str, interval: str):
     df['EMA48']=ta.trend.ema_indicator(close=df['close'], window=48)
 
     # Relative Strength Index (RSI)
-    df['RSI'] =ta.momentum.rsi(close=df['close'], window=14)
+    df['RSI'] =ta.momentum.rsi(close=df['close'], window=bot.rsi_length)
 
     # TRIX
-    trixLength = 8
-    trixSignal = 19 
-    df['TRIX'] = ta.trend.ema_indicator(ta.trend.ema_indicator(ta.trend.ema_indicator(close=df['close'], window=trixLength), window=trixLength), window=trixLength)
+    trix_length = bot.trix_length
+    trix_signal = bot.trix_signal
+    df['TRIX'] = ta.trend.ema_indicator(ta.trend.ema_indicator(ta.trend.ema_indicator(close=df['close'], window=trix_length), window=trix_length), window=trix_length)
     df['TRIX_PCT'] = df["TRIX"].pct_change()*100
-    df['TRIX_SIGNAL'] = ta.trend.sma_indicator(df['TRIX_PCT'],trixSignal)
+    df['TRIX_SIGNAL'] = ta.trend.sma_indicator(df['TRIX_PCT'],trix_signal)
     df['TRIX_HISTO'] = df['TRIX_PCT'] - df['TRIX_SIGNAL']
 
     # MACD
-    MACD = ta.trend.MACD(close=df['close'], window_fast=12, window_slow=26, window_sign=9)
-    df['MACD'] = MACD.macd()
-    df['MACD_SIGNAL'] = MACD.macd_signal()
-    df['MACD_DIFF'] = MACD.macd_diff() #Histogramme MACD
+    macd = ta.trend.MACD(close=df['close'], window_fast=12, window_slow=26, window_sign=9)
+    df['MACD'] = macd.macd()
+    df['MACD_SIGNAL'] = macd.macd_signal()
+    df['MACD_DIFF'] = macd.macd_diff() #Histogramme MACD
 
     # BigWill
-    df['AO']= ta.momentum.awesome_oscillator(df['high'],df['low'],window1=6,window2=22)
+    df['AO']= ta.momentum.awesome_oscillator(df['high'],df['low'],window1=bot.big_windows_1,window2=bot.big_windows_2)
     df['WillR'] = ta.momentum.williams_r(high=df['high'], low=df['low'], close=df['close'], lbp=14)
 
     # Stochastic RSI
@@ -75,26 +98,26 @@ def init_data(pair: str, date: str, interval: str):
     df['SSB'] = ta.trend.ichimoku_b(high=df['high'], low=df['low'], window2=26, window3=52)
 
     # Bollinger Bands
-    BOL_BAND = ta.volatility.BollingerBands(close=df['close'], window=20, window_dev=2)
-    df['BOL_H_BAND'] = BOL_BAND.bollinger_hband() #Bande Supérieur
-    df['BOL_L_BAND'] = BOL_BAND.bollinger_lband() #Bande inférieur
-    df['BOL_MAVG_BAND'] = BOL_BAND.bollinger_mavg() #Bande moyenne
+    bol_band = ta.volatility.BollingerBands(close=df['close'], window=20, window_dev=2)
+    df['BOL_H_BAND'] = bol_band.bollinger_hband() #Bande Supérieur
+    df['BOL_L_BAND'] = bol_band.bollinger_lband() #Bande inférieur
+    df['BOL_MAVG_BAND'] = bol_band.bollinger_mavg() #Bande moyenne
 
     # ADX
-    ADX = ta.trend.ADXIndicator(df['high'], df['low'], df['close'], window=14) 
-    df['ADX'] = ADX.adx()
-    df['ADX_NEG'] = ADX.adx_neg()
-    df['ADX_POS'] = ADX.adx_pos()
+    adx = ta.trend.ADXIndicator(df['high'], df['low'], df['close'], window=14) 
+    df['ADX'] = adx.adx()
+    df['ADX_NEG'] = adx.adx_neg()
+    df['ADX_POS'] = adx.adx_pos()
 
     # Average True Range (ATR)
     df['ATR'] = ta.volatility.average_true_range(high=df['high'], low=df['low'], close=df['close'], window=14)
 
     # Super Trend
-    ST_length = 10
-    ST_multiplier = 3.0
-    superTrend = pda.supertrend(high=df['high'], low=df['low'], close=df['close'], length=ST_length, multiplier=ST_multiplier)
-    df['SUPER_TREND'] = superTrend['SUPERT_'+str(ST_length)+"_"+str(ST_multiplier)] #Valeur de la super trend
-    df['SUPER_TREND_DIRECTION'] = superTrend['SUPERTd_'+str(ST_length)+"_"+str(ST_multiplier)] #Retourne 1 si vert et -1 si rouge
+    st_length = 10
+    st_multiplier = 3.0
+    superTrend = pda.supertrend(high=df['high'], low=df['low'], close=df['close'], length=st_length, multiplier=st_multiplier)
+    df['SUPER_TREND'] = superTrend['SUPERT_'+str(st_length)+"_"+str(st_multiplier)] #Valeur de la super trend
+    df['SUPER_TREND_DIRECTION'] = superTrend['SUPERTd_'+str(st_length)+"_"+str(st_multiplier)] #Retourne 1 si vert et -1 si rouge
 
     #Awesome Oscillator
     df['AWESOME_OSCILLATOR'] = ta.momentum.awesome_oscillator(high=df['high'], low=df['low'], window1=5, window2=34)
@@ -107,6 +130,7 @@ def init_data(pair: str, date: str, interval: str):
     strat_array.append(('ema', tr.buy_condition_ema, tr.sell_condition_ema))
     strat_array.append(('trix', tr.buy_condition_trix, tr.sell_condition_trix))
     strat_array.append(('true', tr.buy_condition_true_strategy, tr.sell_condition_true_strategy))
+    strat_array.append(('macd', tr.buy_condition_macd, tr.sell_condition_macd))
 
-    dfTest = df.copy()
-    return (dfTest, strat_array)
+    df_test = df.copy()
+    return (df_test, strat_array)
