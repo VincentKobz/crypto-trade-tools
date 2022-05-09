@@ -1,0 +1,18 @@
+version: '3'
+
+services:
+  api-service:
+    build: ./api
+    volumes:
+      - ./api:/app
+    ports:
+      - 5000:5000
+
+  website:
+    build: ./ui
+    volumes:
+      - ./ui:/app
+    ports:
+      - 8080:8080
+
+

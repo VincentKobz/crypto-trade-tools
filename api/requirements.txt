@@ -1,0 +1,8 @@
+pandas
+pandas_ta
+flask
+flask_restful
+python-binance
+ta
+matplotlib
+flask-cors

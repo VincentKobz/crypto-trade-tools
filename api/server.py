@@ -9,8 +9,7 @@ app = Flask(__name__)
 api = Api(app)
 
 # SETUP CORS
-cors = CORS(app)
-app.config['CORS_HEADERS'] = 'Content-Type'
+CORS(app)
 
 parser = reqparse.RequestParser()
 
@@ -48,6 +47,6 @@ class Calculate(Resource):
 
 api.add_resource(Results, '/result')
 api.add_resource(Calculate, '/calculate')
-    
+
 if __name__ == '__main__':
-    app.run()
+    app.run(host='0.0.0.0', port=5000)
