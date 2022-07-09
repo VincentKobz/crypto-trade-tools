@@ -1,8 +1,10 @@
+"""
+Server: module for bot API
+"""
 from flask import Flask
 from flask_restful import Resource, Api, reqparse
-from flask_cors import CORS, cross_origin
+from flask_cors import CORS
 import pandas as pd
-from pandas_ta import performance
 import src.test_all as test
 
 app = Flask(__name__)
@@ -26,7 +28,13 @@ parser.add_argument('optimize', required=True)
 res = [('None', 'None', 'None', 'None', 'None')]
 
 class Results(Resource):
+    """
+    Results: class for result API
+    """
     def get(self):
+        """
+        Get: return the result from the bot analysis
+        """
         is_all = len(res) > 1
         new_data = pd.DataFrame({
                     'test_all': is_all,
@@ -37,11 +45,19 @@ class Results(Resource):
         return {'data': new_data.to_dict()}, 200
 
 class Calculate(Resource):
+    """
+    Calculate: class for calculate API
+    """
     def post(self):
+        """
+        Post: receipt the bot parameters and return the result analysis
+        """
         print("OK")
         args = parser.parse_args()
         print(args)
-        res_temp = test.launch_backtracing(args['test_all'], args['pair'], args['start'], args['interval'], args['strategy'], args['wallet'], args['taker_fee'], args['maker_fee'])
+        res_temp = test.launch_backtracing(args['test_all'], args['pair'], args['start'],
+            args['interval'], args['strategy'], args['wallet'], args['taker_fee'],
+            args['maker_fee'])
 
         return {'data': res_temp}, 200
 

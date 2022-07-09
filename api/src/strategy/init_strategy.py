@@ -1,6 +1,5 @@
 from binance.client import Client
 import ta
-import pandas_ta as pda
 import pandas as pd
 from src.backtrace import Backtrace
 import src.strategy.trade_condition as tr
